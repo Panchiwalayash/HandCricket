@@ -468,3 +468,242 @@ body {
 .shake-wicket {
   animation: shake-wicket 0.6s ease-in-out;
 }
+
+/* Simplified scoreboard content layouts */
+.bigscreen-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+}
+
+.scoreboard-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+}
+
+.score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+
+.player-score {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--text-white);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  line-height: 1.1;
+}
+
+.score-divider {
+  width: 1px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.score-status {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--zpl-yellow);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Matchup / Confrontation Screen */
+.scoreboard-matchup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.matchup-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.matchup-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  width: 80px;
+  height: 85px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.matchup-vs {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+}
+
+.matchup-card .matchup-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 4px;
+}
+
+.matchup-val {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--zpl-blue-light);
+  line-height: 1;
+}
+
+.matchup-card.opp-card .matchup-val {
+  color: var(--zpl-red-light);
+}
+
+.matchup-outcome {
+  margin-top: 12px;
+  min-height: 20px;
+}
+
+.outcome-text {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.outcome-text.outcome-out {
+  color: #ef5350;
+  text-shadow: 0 0 10px rgba(239, 83, 80, 0.4);
+}
+
+.outcome-text.outcome-runs {
+  color: #4caf50;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.outcome-thinking {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.5px;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 480px) {
+  body {
+    padding-bottom: 20px;
+  }
+  
+  .profile-badge-left {
+    min-width: 130px;
+    padding: 8px 12px 8px 40px;
+    border-radius: 0 20px 20px 0;
+    font-size: 0.8rem;
+  }
+
+  .profile-badge-right {
+    min-width: 130px;
+    padding: 8px 40px 8px 12px;
+    border-radius: 20px 0 0 20px;
+    font-size: 0.8rem;
+  }
+
+  .avatar-left-edge {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    left: -15px;
+    border-width: 2px;
+  }
+
+  .avatar-right-edge {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    right: -15px;
+    border-width: 2px;
+  }
+
+  .badgeName {
+    font-size: 0.85rem !important;
+  }
+
+  .badgeRole {
+    font-size: 0.7rem !important;
+  }
+
+  .dots-pill-container {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .log-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .stadium-bigscreen {
+    height: 175px;
+    padding: 10px;
+    border-width: 4px;
+  }
+
+  .player-score {
+    font-size: 2.3rem;
+  }
+
+  .matchup-card {
+    width: 70px;
+    height: 75px;
+  }
+
+  .matchup-val {
+    font-size: 1.8rem;
+  }
+
+  .outcome-text {
+    font-size: 0.95rem;
+  }
+
+  .zpl-card-deck {
+    gap: 10px;
+  }
+
+  .flat-card {
+    padding: 8px 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 0px #cfcfd4, 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .flat-card span.card-number {
+    font-size: 1.8rem;
+  }
+}

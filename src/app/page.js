@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PLAYER_NAMES } from '../utils/playerPool';
 import Hud from '../components/Hud';
 import BigScreen from '../components/BigScreen';
@@ -11,8 +11,9 @@ import GameOver from '../components/GameOver';
 export default function DirectHandCricket() {
   // States: 'PLAYING' | 'GAME_OVER'
   const [gameState, setGameState] = useState('PLAYING');
-  const [player1, setPlayer1] = useState({ name: 'Player 1', avatar: '🏏' });
-  const [player2, setPlayer2] = useState({ name: 'Player 2', avatar: '👑' });
+  const isProcessing = useRef(false);
+  const [player1, setPlayer1] = useState({ name: 'YOU', avatar: '🧤' });
+  const [player2, setPlayer2] = useState({ name: 'OPPONENT', avatar: '🔴' });
 
   // Match statistics
   const [currentInnings, setCurrentInnings] = useState(1);
@@ -40,36 +41,24 @@ export default function DirectHandCricket() {
   // Big Moment overlays: 'four' | 'six' | 'wicket' | null
   const [bigMoment, setBigMoment] = useState(null);
 
-  // Randomize player profiles on mount
+  // Initialize player profiles on mount
   useEffect(() => {
-    const p1Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    let p2Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    while (p1Idx === p2Idx) {
-      p2Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    }
-
-    const avatars = ['🏏', '⚡', '👑', '🔥', '🎯', '🧤', '🦁', '🏆'];
-    const avatar1 = avatars[Math.floor(Math.random() * avatars.length)];
-    const avatar2 = avatars[Math.floor(Math.random() * avatars.length)];
-
-    const selectedPlayer1Name = PLAYER_NAMES[p1Idx];
-    const selectedPlayer2Name = PLAYER_NAMES[p2Idx];
-
-    setPlayer1({ name: selectedPlayer1Name, avatar: avatar1 });
-    setPlayer2({ name: selectedPlayer2Name, avatar: avatar2 });
+    setPlayer1({ name: 'YOU', avatar: '🧤' });
+    setPlayer2({ name: 'OPPONENT', avatar: '🔴' });
 
     const startingRole = Math.random() < 0.5 ? 'batting' : 'bowling';
     setUserRole(startingRole);
     setCommentary(
       startingRole === 'batting' 
         ? 'Match started: You are batting first!' 
-        : `${selectedPlayer2Name} is batting first. You are bowling!`
+        : 'Opponent is batting first. You are bowling!'
     );
   }, []);
 
   // Handle number card clicks
   const handlePlayBall = (userNum) => {
-    if (isThinking || isWicket) return;
+    if (isProcessing.current || isThinking || isWicket) return;
+    isProcessing.current = true;
 
     setPlayerChoice(userNum);
     setIsThinking(true);
@@ -112,10 +101,10 @@ export default function DirectHandCricket() {
 
           if (userRole === 'batting') {
             setUserFinalScore(score);
-            setCommentary(`Yay! Clean bowled. ${player2.name} matched your ${compNum}!`);
+            setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
           } else {
             setOpponentFinalScore(score);
-            setCommentary(`Yay! Clean bowled. You got ${player2.name} OUT!`);
+            setCommentary(`Clean bowled! You got Opponent OUT!`);
           }
 
           setTarget(score + 1);
@@ -129,6 +118,7 @@ export default function DirectHandCricket() {
             setBallOutcome('-');
             setBallHistory([]);
             setCommentary(`Innings 2: Target is ${score + 1} runs!`);
+            isProcessing.current = false;
           }, 2000);
 
         } else {
@@ -145,7 +135,7 @@ export default function DirectHandCricket() {
           if (userRole === 'batting') {
             setCommentary(`You score ${userNum} run(s)!`);
           } else {
-            setCommentary(`${player2.name} scores ${compNum} run(s)!`);
+            setCommentary(`Opponent scores ${compNum} run(s)!`);
           }
         }
 
@@ -162,10 +152,10 @@ export default function DirectHandCricket() {
 
           if (userRole === 'batting') {
             setUserFinalScore(score);
-            setCommentary(`Yay! Clean bowled. ${player2.name} matched your ${compNum}!`);
+            setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
           } else {
             setOpponentFinalScore(score);
-            setCommentary(`Yay! Clean bowled. You got ${player2.name} OUT!`);
+            setCommentary(`Clean bowled! You got Opponent OUT!`);
           }
 
           setTimeout(() => {
@@ -186,7 +176,7 @@ export default function DirectHandCricket() {
           if (userRole === 'batting') {
             setCommentary(`You score ${userNum} run(s)!`);
           } else {
-            setCommentary(`${player2.name} scores ${compNum} run(s)!`);
+            setCommentary(`Opponent scores ${compNum} run(s)!`);
           }
 
           if (newScore >= target) {
@@ -208,6 +198,7 @@ export default function DirectHandCricket() {
         setPlayerChoice(null);
         setOpponentChoice(null);
         setBigMoment(null);
+        isProcessing.current = false;
       }, 1800);
 
     }, 2000);
@@ -215,14 +206,9 @@ export default function DirectHandCricket() {
 
   // Reset lobby/state
   const resetGame = () => {
-    const p1Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    let p2Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    while (p1Idx === p2Idx) {
-      p2Idx = Math.floor(Math.random() * PLAYER_NAMES.length);
-    }
-    const avatars = ['🏏', '⚡', '👑', '🔥', '🎯', '🧤', '🦁', '🏆'];
-    setPlayer1({ name: PLAYER_NAMES[p1Idx], avatar: avatars[Math.floor(Math.random() * avatars.length)] });
-    setPlayer2({ name: PLAYER_NAMES[p2Idx], avatar: avatars[Math.floor(Math.random() * avatars.length)] });
+    isProcessing.current = false;
+    setPlayer1({ name: 'YOU', avatar: '🧤' });
+    setPlayer2({ name: 'OPPONENT', avatar: '🔴' });
 
     setGameState('PLAYING');
     setCurrentInnings(1);
@@ -241,7 +227,7 @@ export default function DirectHandCricket() {
     setCommentary(
       startingRole === 'batting' 
         ? 'Match started: You are batting first!' 
-        : `${PLAYER_NAMES[p2Idx]} is batting first. You are bowling!`
+        : 'Opponent is batting first. You are bowling!'
     );
   };
 

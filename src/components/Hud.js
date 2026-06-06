@@ -1,14 +1,17 @@
 'use client';
 
 export default function Hud({ player1, player2, userRole, score, opponentFinalScore, ballHistory }) {
+  const p1Avatar = userRole === 'batting' ? '🧤' : '🔴';
+  const p2Avatar = userRole === 'batting' ? '🔴' : '🧤';
+
   return (
     <>
       {/* Top Slanting Profile HUD */}
       <div style={styles.hudRow}>
         {/* Left Pill (Player 1) */}
         <div className="profile-badge-left">
-          <div className="avatar-left-edge">{player1.avatar}</div>
-          <span style={styles.badgeName}>{player1.name} (YOU)</span>
+          <div className="avatar-left-edge">{p1Avatar}</div>
+          <span style={styles.badgeName}>YOU</span>
           <span style={styles.badgeRole}>
             {userRole === 'batting' ? `BATTING: ${score}` : 'BOWLING'}
           </span>
@@ -16,8 +19,8 @@ export default function Hud({ player1, player2, userRole, score, opponentFinalSc
 
         {/* Right Pill (Player 2) */}
         <div className="profile-badge-right">
-          <div className="avatar-right-edge">{player2.avatar}</div>
-          <span style={styles.badgeName}>{player2.name} (OPPONENT)</span>
+          <div className="avatar-right-edge">{p2Avatar}</div>
+          <span style={styles.badgeName}>OPP</span>
           <span style={styles.badgeRole}>
             {userRole === 'batting' ? 'BOWLING' : `BATTING: ${score}`}
           </span>

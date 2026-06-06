@@ -14,7 +14,7 @@ export default function GameOver({
   if (userScoreVal > opponentScoreVal) {
     resultMessage = '🏆 CONGRATS! YOU WON!';
   } else if (opponentScoreVal > userScoreVal) {
-    resultMessage = `💀 GAME OVER! ${player2.name} WON!`;
+    resultMessage = `💀 GAME OVER! OPPONENT WON!`;
   } else {
     resultMessage = '🤝 TIED MATCH! DRAW!';
   }
@@ -25,11 +25,11 @@ export default function GameOver({
       
       <div style={styles.scoreSummaryCard}>
         <div style={styles.summaryScoreCol}>
-          <span style={styles.summaryScoreLabel}>{player1.name.toUpperCase()} SCORE</span>
+          <span style={styles.summaryScoreLabel}>YOUR SCORE</span>
           <span style={{ ...styles.summaryScoreVal, color: 'var(--zpl-blue-light)' }}>{userScoreVal}</span>
         </div>
         <div style={styles.summaryScoreCol}>
-          <span style={styles.summaryScoreLabel}>{player2.name.toUpperCase()} SCORE</span>
+          <span style={styles.summaryScoreLabel}>OPPONENT SCORE</span>
           <span style={{ ...styles.summaryScoreVal, color: 'var(--zpl-red)' }}>{opponentScoreVal}</span>
         </div>
       </div>

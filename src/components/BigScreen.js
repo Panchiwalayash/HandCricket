@@ -11,74 +11,83 @@ export default function BigScreen({
   playerChoice, 
   opponentChoice 
 }) {
+  const isPlayActive = playerChoice !== null;
+
+  // Derive scores safely
+  const youScore = userRole === 'batting' ? score : opponentFinalScore ?? '-';
+  const oppScore = userRole === 'batting' ? opponentFinalScore ?? '-' : score;
+
   return (
     <section className="stadium-bigscreen">
       <div className="bigscreen-header">
-        <span className="bigscreen-title">LIVE STADIUM SCOREBOARD</span>
-        <span className="bigscreen-mode">● TRANSMISSION DIRECT</span>
+        <span className="bigscreen-title">STADIUM SCOREBOARD</span>
+        <span className="bigscreen-mode">● LIVE</span>
       </div>
 
-      <div className="bigscreen-body">
-        {/* Player 1 Metric */}
-        <div className="bigscreen-metric-col">
-          <span className="bigscreen-label">{player1.name.toUpperCase()} (YOU)</span>
-          <span className="bigscreen-value-glow">
-            {userRole === 'batting' ? score : opponentFinalScore ?? '-'}
-          </span>
-          <span style={{ ...styles.choiceLabel, color: 'var(--zpl-blue-light)' }}>
-            CHOICE: {playerChoice ?? '-'}
-          </span>
-        </div>
-
-        {/* Central Reveal */}
-        <div className="bigscreen-center-reveal">
-          {isThinking ? (
-            <div className="thinking-dots-light">
-              <span />
-              <span />
-              <span />
+      <div className="bigscreen-content">
+        {!isPlayActive ? (
+          // Idle State: Clean, simplified scorecard display
+          <div className="scoreboard-idle">
+            <div className="score-row">
+              <div className="score-col">
+                <span className="player-label">
+                  YOU {userRole === 'batting' && '🧤'}
+                </span>
+                <span className="player-score">{youScore}</span>
+              </div>
+              
+              <div className="score-divider" />
+              
+              <div className="score-col">
+                <span className="player-label">
+                  OPP {userRole === 'bowling' && '🧤'}
+                </span>
+                <span className="player-score">{oppScore}</span>
+              </div>
             </div>
-          ) : (
-            <span className="bigscreen-reveal-num">{ballOutcome}</span>
-          )}
-          <span style={styles.outcomeLabel}>
-            {isThinking ? 'THINKING' : 'OUTCOME'}
-          </span>
-        </div>
+            <div className="score-status">
+              {userRole === 'batting' ? '🏏 You are batting' : '🥎 You are bowling'}
+            </div>
+          </div>
+        ) : (
+          // Active Confrontation State: Simplified matchup
+          <div className="scoreboard-matchup">
+            <div className="matchup-cards">
+              <div className="matchup-card you-card">
+                <span className="matchup-label">YOU</span>
+                <div className="matchup-val">{playerChoice}</div>
+              </div>
+              
+              <div className="matchup-vs">VS</div>
+              
+              <div className="matchup-card opp-card">
+                <span className="matchup-label">OPP</span>
+                <div className="matchup-val opp-val">
+                  {isThinking ? (
+                    <div className="thinking-dots-light">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  ) : (
+                    opponentChoice ?? '?'
+                  )}
+                </div>
+              </div>
+            </div>
 
-        {/* Player 2 Metric */}
-        <div className="bigscreen-metric-col">
-          <span className="bigscreen-label">{player2.name.toUpperCase()} (OPP)</span>
-          <span className="bigscreen-value-yellow">
-            {userRole === 'batting' ? opponentFinalScore ?? '-' : score}
-          </span>
-          <span style={{ ...styles.choiceLabelOpponent, color: 'var(--zpl-red-light)', opacity: 1 }}>
-            CHOICE: {isThinking ? '...' : opponentChoice ?? '-'}
-          </span>
-        </div>
+            <div className="matchup-outcome">
+              {isThinking ? (
+                <span className="outcome-thinking">Opponent is thinking...</span>
+              ) : (
+                <span className={`outcome-text ${ballOutcome === 'W' ? 'outcome-out' : 'outcome-runs'}`}>
+                  {ballOutcome === 'W' ? '🔴 OUT!' : `🏏 +${ballOutcome} RUNS`}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 }
-
-const styles = {
-  choiceLabel: {
-    fontSize: '0.75rem',
-    color: 'rgba(255,255,255,0.4)',
-    fontWeight: '700',
-    marginTop: '4px'
-  },
-  choiceLabelOpponent: {
-    fontSize: '0.75rem',
-    color: 'var(--zpl-yellow)',
-    opacity: 0.8,
-    fontWeight: '700',
-    marginTop: '4px'
-  },
-  outcomeLabel: {
-    fontSize: '0.6rem',
-    color: 'rgba(255,255,255,0.4)',
-    fontWeight: '700',
-    marginTop: '2px'
-  }
-};
