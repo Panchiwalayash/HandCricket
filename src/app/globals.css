@@ -23,6 +23,13 @@
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 body {
   background-image: url('/stadium_bg.png');
   background-size: cover;
@@ -30,40 +37,133 @@ body {
   background-attachment: fixed;
   color: var(--text-dark);
   font-family: var(--font-family);
-  min-height: 100vh;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
 
 /* Slanted profile badges */
 .profile-badge-left {
-  background: var(--zpl-blue);
-  border-radius: 0 30px 30px 0;
-  padding: 10px 20px 10px 70px;
+  background: linear-gradient(135deg, #111827, #1f2937);
+  border-left: 4px solid var(--zpl-blue-light);
+  border-radius: 0 20px 20px 0;
+  padding: 10px 20px 10px 65px;
   color: var(--text-white);
   font-weight: 800;
   font-size: 0.95rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   position: relative;
-  min-width: 170px;
+  min-width: 175px;
 }
 
 .profile-badge-right {
-  background: var(--zpl-red);
-  border-radius: 30px 0 0 30px;
-  padding: 10px 70px 10px 20px;
+  background: linear-gradient(135deg, #111827, #1f2937);
+  border-right: 4px solid var(--zpl-red-light);
+  border-radius: 20px 0 0 20px;
+  padding: 10px 65px 10px 20px;
   color: var(--text-white);
   font-weight: 800;
   font-size: 0.95rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   position: relative;
   align-items: flex-end;
-  min-width: 170px;
+  min-width: 175px;
+}
+
+/* Role Tags */
+.role-tag-batting {
+  background: #ff9933; /* Saffron */
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 0 10px rgba(255, 153, 51, 0.4);
+}
+
+.role-tag-bowling {
+  background: #0056c6; /* Blue */
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 0 10px rgba(0, 86, 198, 0.4);
+}
+
+/* Timer Visual Progress Bar */
+.timer-bar-container {
+  width: 80%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin: 8px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  background: var(--zpl-green-neon);
+  box-shadow: 0 0 8px var(--zpl-green-neon);
+  transition: width 1s linear, background-color 0.3s ease;
+}
+
+.timer-bar-fill.alert {
+  background: var(--zpl-red-light);
+  box-shadow: 0 0 8px var(--zpl-red-light);
+}
+
+.timer-countdown-text {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 1px;
+}
+
+.timer-countdown-text.alert-text {
+  color: var(--zpl-red-light);
+  animation: heartbeat 0.5s infinite ease-in-out;
+}
+
+
+/* Next Match Premium Button style */
+.btn-next-match {
+  background: linear-gradient(135deg, #111827, #1f2937);
+  color: var(--zpl-green-neon);
+  border: 2px solid var(--zpl-green-neon);
+  font-weight: 800;
+  padding: 12px 30px;
+  border-radius: 30px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.95rem;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-next-match:hover {
+  background: var(--zpl-green-neon);
+  color: #12131a;
+  box-shadow: 0 0 25px rgba(57, 255, 20, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-next-match:active {
+  transform: translateY(1px);
 }
 
 /* Round avatar bubble margins */
@@ -192,6 +292,14 @@ body {
   font-weight: 900;
   letter-spacing: 2px;
 }
+
+.bigscreen-balls {
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
 
 .bigscreen-mode {
   color: var(--zpl-green-neon);
@@ -636,6 +744,26 @@ body {
     font-size: 0.8rem;
   }
 
+  .profile-badge-left {
+    min-width: 140px;
+    padding: 8px 10px 8px 35px;
+    border-radius: 0 15px 15px 0;
+    font-size: 0.8rem;
+  }
+
+  .profile-badge-right {
+    min-width: 140px;
+    padding: 8px 35px 8px 10px;
+    border-radius: 15px 0 0 15px;
+    font-size: 0.8rem;
+  }
+
+  .role-tag-batting, .role-tag-bowling {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
   .avatar-left-edge {
     width: 44px;
     height: 44px;
@@ -705,5 +833,14 @@ body {
 
   .flat-card span.card-number {
     font-size: 1.8rem;
+  }
+
+  .big-moment-text {
+    font-size: 3.5rem !important;
+  }
+
+  .big-moment-subtext {
+    font-size: 1.25rem !important;
+    margin-top: 5px;
   }
 }

@@ -3,8 +3,6 @@
 export default function GameOver({ 
   userFinalScore, 
   opponentFinalScore, 
-  player1, 
-  player2, 
   resetGame 
 }) {
   const userScoreVal = userFinalScore ?? 0;
@@ -14,13 +12,13 @@ export default function GameOver({
   if (userScoreVal > opponentScoreVal) {
     resultMessage = '🏆 CONGRATS! YOU WON!';
   } else if (opponentScoreVal > userScoreVal) {
-    resultMessage = `💀 GAME OVER! OPPONENT WON!`;
+    resultMessage = '💀 GAME OVER! OPPONENT WON!';
   } else {
     resultMessage = '🤝 TIED MATCH! DRAW!';
   }
 
   return (
-    <section className="glass-panel animate-fade-in" style={styles.cardContainer}>
+    <section style={styles.cardContainer}>
       <h2 style={styles.sectionTitle}>{resultMessage}</h2>
       
       <div style={styles.scoreSummaryCard}>
@@ -30,11 +28,11 @@ export default function GameOver({
         </div>
         <div style={styles.summaryScoreCol}>
           <span style={styles.summaryScoreLabel}>OPPONENT SCORE</span>
-          <span style={{ ...styles.summaryScoreVal, color: 'var(--zpl-red)' }}>{opponentScoreVal}</span>
+          <span style={{ ...styles.summaryScoreVal, color: 'var(--zpl-red-light)' }}>{opponentScoreVal}</span>
         </div>
       </div>
 
-      <button className="btn-zpl" onClick={resetGame}>Find Next Match</button>
+      <button className="btn-next-match" onClick={resetGame}>Find Next Match</button>
     </section>
   );
 }
@@ -47,26 +45,29 @@ const styles = {
     padding: '40px 20px',
     gap: '30px',
     textAlign: 'center',
-    background: 'rgba(255,255,255,0.85)',
-    color: '#333333',
-    borderRadius: '20px'
+    background: 'rgba(18, 19, 26, 0.95)',
+    border: '3px solid #2b2e3c',
+    color: '#ffffff',
+    borderRadius: '20px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
   },
   sectionTitle: {
     fontSize: '1.6rem',
     fontWeight: '900',
     letterSpacing: '1px',
+    textShadow: '0 0 10px rgba(255,255,255,0.1)',
   },
   scoreSummaryCard: {
     display: 'flex',
-    background: '#ffffff',
-    border: '1px solid #e0e0e0',
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
     borderRadius: '16px',
     padding: '20px 10px',
     width: '100%',
     maxWidth: '400px',
     justifyContent: 'space-around',
     margin: '10px 0',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
   },
   summaryScoreCol: {
     display: 'flex',
@@ -75,12 +76,15 @@ const styles = {
     gap: '6px',
   },
   summaryScoreLabel: {
-    fontSize: '0.8rem',
+    fontSize: '0.85rem',
     fontWeight: '800',
-    color: '#777777',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: '1px',
   },
   summaryScoreVal: {
     fontSize: '2.8rem',
     fontWeight: '900',
+    textShadow: '0 0 12px rgba(255, 255, 255, 0.1)',
   }
 };
+

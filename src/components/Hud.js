@@ -1,47 +1,44 @@
 'use client';
 
-export default function Hud({ player1, player2, userRole, score, opponentFinalScore, ballHistory }) {
-  const p1Avatar = userRole === 'batting' ? '🧤' : '🔴';
-  const p2Avatar = userRole === 'batting' ? '🔴' : '🧤';
+export default function Hud({ 
+  userRole, 
+  currentInnings, 
+  score, 
+  userFinalScore, 
+  opponentFinalScore 
+}) {
+  const youScore = userRole === 'batting' ? score : (currentInnings === 2 ? userFinalScore : '-');
+  const oppScore = userRole === 'bowling' ? score : (currentInnings === 2 ? opponentFinalScore : '-');
+
+  const youIsBatting = userRole === 'batting';
+  const oppIsBatting = !youIsBatting;
 
   return (
-    <>
-      {/* Top Slanting Profile HUD */}
-      <div style={styles.hudRow}>
-        {/* Left Pill (Player 1) */}
-        <div className="profile-badge-left">
-          <div className="avatar-left-edge">{p1Avatar}</div>
-          <span style={styles.badgeName}>YOU</span>
-          <span style={styles.badgeRole}>
-            {userRole === 'batting' ? `BATTING: ${score}` : 'BOWLING'}
+    <div style={styles.hudRow}>
+      {/* Left Pill (Player 1 - YOU) */}
+      <div className="profile-badge-left">
+        <div className="avatar-left-edge">{youIsBatting ? '🏏' : '🥎'}</div>
+        <span style={styles.badgeName}>YOU</span>
+        <div style={styles.badgeRoleContainer}>
+          <span className={youIsBatting ? 'role-tag-batting' : 'role-tag-bowling'}>
+            {youIsBatting ? '🏏 BATTING' : '🥎 BOWLING'}
           </span>
-        </div>
-
-        {/* Right Pill (Player 2) */}
-        <div className="profile-badge-right">
-          <div className="avatar-right-edge">{p2Avatar}</div>
-          <span style={styles.badgeName}>OPP</span>
-          <span style={styles.badgeRole}>
-            {userRole === 'batting' ? 'BOWLING' : `BATTING: ${score}`}
-          </span>
+          <span style={styles.badgeScore}>SCORE: {youScore}</span>
         </div>
       </div>
 
-      {/* Dots Indicator track */}
-      <div style={styles.dotsRow}>
-        <div className="dots-pill-container">
-          {[0, 1, 2, 3, 4, 5].map((idx) => {
-            const outcome = ballHistory[idx];
-            return (
-              <div 
-                key={idx} 
-                className={`log-dot ${outcome === 'R' ? 'active-run' : outcome === 'W' ? 'active-out' : ''}`} 
-              />
-            );
-          })}
+      {/* Right Pill (Player 2 - OPP) */}
+      <div className="profile-badge-right">
+        <div className="avatar-right-edge">{oppIsBatting ? '🏏' : '🥎'}</div>
+        <span style={styles.badgeName}>OPPONENT</span>
+        <div style={styles.badgeRoleContainerRight}>
+          <span className={oppIsBatting ? 'role-tag-batting' : 'role-tag-bowling'}>
+            {oppIsBatting ? '🏏 BATTING' : '🥎 BOWLING'}
+          </span>
+          <span style={styles.badgeScore}>SCORE: {oppScore}</span>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -55,15 +52,24 @@ const styles = {
   badgeName: {
     fontSize: '1.05rem',
     fontWeight: '900',
+    marginBottom: '4px',
   },
-  badgeRole: {
-    fontSize: '0.8rem',
-    opacity: 0.85,
-    fontWeight: '700',
-  },
-  dotsRow: {
+  badgeRoleContainer: {
     display: 'flex',
-    justifyContent: 'center',
-    margin: '0 auto',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '6px',
+  },
+  badgeRoleContainerRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '6px',
+  },
+  badgeScore: {
+    fontSize: '0.85rem',
+    fontWeight: '800',
+    opacity: 0.95,
   }
 };
+

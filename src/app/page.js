@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PLAYER_NAMES } from '../utils/playerPool';
 import Hud from '../components/Hud';
 import BigScreen from '../components/BigScreen';
 import CardDeck from '../components/CardDeck';
@@ -12,14 +11,13 @@ export default function DirectHandCricket() {
   // States: 'PLAYING' | 'GAME_OVER'
   const [gameState, setGameState] = useState('PLAYING');
   const isProcessing = useRef(false);
-  const [player1, setPlayer1] = useState({ name: 'YOU', avatar: '🧤' });
-  const [player2, setPlayer2] = useState({ name: 'OPPONENT', avatar: '🔴' });
 
   // Match statistics
   const [currentInnings, setCurrentInnings] = useState(1);
   const [userRole, setUserRole] = useState('batting'); // 'batting' | 'bowling'
   const [score, setScore] = useState(0);
   const [target, setTarget] = useState(0);
+  const [ballsBowled, setBallsBowled] = useState(0);
   const [userFinalScore, setUserFinalScore] = useState(null);
   const [opponentFinalScore, setOpponentFinalScore] = useState(null);
 
@@ -28,24 +26,25 @@ export default function DirectHandCricket() {
   const [opponentChoice, setOpponentChoice] = useState(null);
   const [isWicket, setIsWicket] = useState(false);
   const [commentary, setCommentary] = useState('Select a run card to play!');
-  
-  // Simulated Multiplayer delays
-  const [isThinking, setIsThinking] = useState(false);
-  const [thinkingText, setThinkingText] = useState('Opponent is ready...');
-
-  // Visual effects
   const [ballOutcome, setBallOutcome] = useState('-'); 
-  const [ballHistory, setBallHistory] = useState([]); 
   const [isShaking, setIsShaking] = useState(false);
   
   // Big Moment overlays: 'four' | 'six' | 'wicket' | null
   const [bigMoment, setBigMoment] = useState(null);
 
-  // Initialize player profiles on mount
-  useEffect(() => {
-    setPlayer1({ name: 'YOU', avatar: '🧤' });
-    setPlayer2({ name: 'OPPONENT', avatar: '🔴' });
+  // 3-second selection countdown timer
+  const [timerVal, setTimerVal] = useState(3);
+  const [showOutcome, setShowOutcome] = useState(false);
+  const [gameId, setGameId] = useState('');
 
+  // Helper to generate random game ID
+  const generateGameId = () => {
+    return 'g-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+  };
+
+  // Initialize starting roles and game ID
+  useEffect(() => {
+    setGameId(generateGameId());
     const startingRole = Math.random() < 0.5 ? 'batting' : 'bowling';
     setUserRole(startingRole);
     setCommentary(
@@ -55,172 +54,266 @@ export default function DirectHandCricket() {
     );
   }, []);
 
-  // Handle number card clicks
-  const handlePlayBall = (userNum) => {
-    if (isProcessing.current || isThinking || isWicket) return;
-    isProcessing.current = true;
-
+  // Update selection on click (without immediate comparison)
+  const handleSelectCard = (userNum) => {
+    if (showOutcome || isWicket || gameState !== 'PLAYING') return;
     setPlayerChoice(userNum);
-    setIsThinking(true);
+    setCommentary(`You selected card ${userNum}! Waiting for delivery...`);
+  };
 
-    const opponentMessages = userRole === 'batting'
-      ? [
-          'Opponent is adjusting fielders...',
-          'Opponent is selecting run-up...',
-          'Opponent is preparing delivery...'
-        ]
-      : [
-          'Opponent is checking boundaries...',
-          'Opponent is choosing shot angle...',
-          'Opponent is locking in...'
-        ];
+  // Evaluate comparison and compute runs/wickets when timer hits 0
+  const evaluatePlay = (userNum) => {
+    const isDotBall = userNum === null;
+    const finalUserNum = isDotBall ? 0 : userNum;
+    const compNum = isDotBall ? 0 : (Math.floor(Math.random() * 6) + 1);
 
-    setThinkingText(opponentMessages[0]);
-    const messageTimeout = setTimeout(() => {
-      setThinkingText(opponentMessages[Math.floor(Math.random() * opponentMessages.length)]);
-    }, 1000);
+    setPlayerChoice(finalUserNum);
+    setOpponentChoice(compNum);
 
-    setTimeout(() => {
-      clearTimeout(messageTimeout);
-      setIsThinking(false);
+    const isMatch = !isDotBall && (finalUserNum === compNum);
+    const nextBallsBowled = ballsBowled + 1;
+    setBallsBowled(nextBallsBowled);
 
-      const compNum = Math.floor(Math.random() * 6) + 1;
-      setOpponentChoice(compNum);
+    // Calculate runs for this ball
+    let runsScored = 0;
+    if (!isDotBall && !isMatch) {
+      runsScored = userRole === 'batting' ? finalUserNum : compNum;
+    }
+    const newScore = score + runsScored;
 
-      const isMatch = userNum === compNum;
+    // Post play data to Postgres API in the background
+    fetch('/api/record-play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gameId,
+        playerChoice: finalUserNum,
+        opponentChoice: compNum,
+        userRole,
+        scoreBefore: score,
+        scoreAfter: newScore,
+        runsScored,
+        target,
+        currentInnings,
+        ballsBowled: nextBallsBowled,
+        isWicket: isMatch
+      })
+    }).catch(err => console.error('Failed to log play:', err));
 
-      if (currentInnings === 1) {
-        if (isMatch) {
-          // OUT
-          setIsWicket(true);
-          setIsShaking(true);
-          setBallOutcome('W');
-          setBallHistory(prev => [...prev.slice(-5), 'W']);
-          setBigMoment('wicket');
-          setTimeout(() => setIsShaking(false), 600);
+    if (currentInnings === 1) {
+      if (isMatch) {
+        // OUT
+        setIsWicket(true);
+        setIsShaking(true);
+        setBallOutcome('W');
+        setBigMoment('wicket');
+        setTimeout(() => setIsShaking(false), 600);
 
+        if (userRole === 'batting') {
+          setUserFinalScore(score);
+          setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
+        } else {
+          setOpponentFinalScore(score);
+          setCommentary(`Clean bowled! You got Opponent OUT!`);
+        }
+
+        setTarget(score + 1);
+        
+        setTimeout(() => {
+          setCurrentInnings(2);
+          setIsWicket(false);
+          setScore(0);
+          setBallsBowled(0);
+          setUserRole(prev => prev === 'batting' ? 'bowling' : 'batting');
+          setPlayerChoice(null);
+          setOpponentChoice(null);
+          setBallOutcome('-');
+          setBigMoment(null);
+          setCommentary(`Innings 2: Target is ${score + 1} runs!`);
+          setShowOutcome(false);
+          setTimerVal(3);
+          isProcessing.current = false;
+        }, 1500);
+
+      } else {
+        // Dot ball or normal runs
+        setScore(newScore);
+        setBallOutcome(isDotBall ? '0' : runsScored.toString());
+
+        if (runsScored === 4) setBigMoment('four');
+        if (runsScored === 6) setBigMoment('six');
+
+        if (isDotBall) {
+          setCommentary(userRole === 'batting' ? 'No shot played! Dot ball.' : 'Opponent defended! Dot ball.');
+        } else {
           if (userRole === 'batting') {
-            setUserFinalScore(score);
-            setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
+            setCommentary(`You score ${finalUserNum} run(s)!`);
           } else {
-            setOpponentFinalScore(score);
-            setCommentary(`Clean bowled! You got Opponent OUT!`);
+            setCommentary(`Opponent scores ${compNum} run(s)!`);
           }
+        }
 
-          setTarget(score + 1);
+        // Check if 6 balls completed
+        if (nextBallsBowled === 6) {
+          if (userRole === 'batting') {
+            setUserFinalScore(newScore);
+          } else {
+            setOpponentFinalScore(newScore);
+          }
+          setTarget(newScore + 1);
+
           setTimeout(() => {
             setCurrentInnings(2);
-            setIsWicket(false);
             setScore(0);
+            setBallsBowled(0);
             setUserRole(prev => prev === 'batting' ? 'bowling' : 'batting');
             setPlayerChoice(null);
             setOpponentChoice(null);
             setBallOutcome('-');
-            setBallHistory([]);
-            setCommentary(`Innings 2: Target is ${score + 1} runs!`);
+            setBigMoment(null);
+            setCommentary(`Innings 2: 6 balls completed! Target is ${newScore + 1} runs!`);
+            setShowOutcome(false);
+            setTimerVal(3);
             isProcessing.current = false;
-          }, 2000);
-
+          }, 1500);
         } else {
-          // Score runs
-          const runsScored = userRole === 'batting' ? userNum : compNum;
-          const newScore = score + runsScored;
-          setScore(newScore);
-          setBallOutcome(runsScored.toString());
-          setBallHistory(prev => [...prev.slice(-5), 'R']);
+          setTimeout(() => {
+            setPlayerChoice(null);
+            setOpponentChoice(null);
+            setBigMoment(null);
+            setShowOutcome(false);
+            setTimerVal(3);
+            isProcessing.current = false;
+          }, 1500);
+        }
+      }
 
-          if (runsScored === 4) setBigMoment('four');
-          if (runsScored === 6) setBigMoment('six');
+    } else {
+      // Innings 2 (Chasing target)
+      if (isMatch) {
+        // OUT
+        setIsWicket(true);
+        setIsShaking(true);
+        setBallOutcome('W');
+        setBigMoment('wicket');
+        setTimeout(() => setIsShaking(false), 600);
 
+        if (userRole === 'batting') {
+          setUserFinalScore(score);
+          setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
+        } else {
+          setOpponentFinalScore(score);
+          setCommentary(`Clean bowled! You got Opponent OUT!`);
+        }
+
+        setTimeout(() => {
+          setGameState('GAME_OVER');
+          setBigMoment(null);
+        }, 1500);
+
+      } else {
+        // Dot ball or normal runs
+        setScore(newScore);
+        setBallOutcome(isDotBall ? '0' : runsScored.toString());
+
+        if (runsScored === 4) setBigMoment('four');
+        if (runsScored === 6) setBigMoment('six');
+
+        if (isDotBall) {
+          setCommentary(userRole === 'batting' ? 'No shot played! Dot ball.' : 'Opponent defended! Dot ball.');
+        } else {
           if (userRole === 'batting') {
-            setCommentary(`You score ${userNum} run(s)!`);
+            setCommentary(`You score ${finalUserNum} run(s)!`);
           } else {
             setCommentary(`Opponent scores ${compNum} run(s)!`);
           }
         }
 
-      } else {
-        // Innings 2 (Chasing target)
-        if (isMatch) {
-          // OUT
-          setIsWicket(true);
-          setIsShaking(true);
-          setBallOutcome('W');
-          setBallHistory(prev => [...prev.slice(-5), 'W']);
-          setBigMoment('wicket');
-          setTimeout(() => setIsShaking(false), 600);
-
+        // Check victory or over complete
+        if (newScore >= target) {
           if (userRole === 'batting') {
-            setUserFinalScore(score);
-            setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
+            setUserFinalScore(newScore);
           } else {
-            setOpponentFinalScore(score);
-            setCommentary(`Clean bowled! You got Opponent OUT!`);
+            setOpponentFinalScore(newScore);
           }
 
           setTimeout(() => {
             setGameState('GAME_OVER');
-          }, 2000);
-
-        } else {
-          // Score runs
-          const runsScored = userRole === 'batting' ? userNum : compNum;
-          const newScore = score + runsScored;
-          setScore(newScore);
-          setBallOutcome(runsScored.toString());
-          setBallHistory(prev => [...prev.slice(-5), 'R']);
-
-          if (runsScored === 4) setBigMoment('four');
-          if (runsScored === 6) setBigMoment('six');
-
+            setBigMoment(null);
+          }, 1500);
+        } else if (nextBallsBowled === 6) {
           if (userRole === 'batting') {
-            setCommentary(`You score ${userNum} run(s)!`);
+            setUserFinalScore(newScore);
           } else {
-            setCommentary(`Opponent scores ${compNum} run(s)!`);
+            setOpponentFinalScore(newScore);
           }
 
-          if (newScore >= target) {
-            if (userRole === 'batting') {
-              setUserFinalScore(newScore);
-            } else {
-              setOpponentFinalScore(newScore);
-            }
-
-            setTimeout(() => {
-              setGameState('GAME_OVER');
-            }, 1000);
-          }
+          setTimeout(() => {
+            setGameState('GAME_OVER');
+            setBigMoment(null);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            setPlayerChoice(null);
+            setOpponentChoice(null);
+            setBigMoment(null);
+            setShowOutcome(false);
+            setTimerVal(3);
+            isProcessing.current = false;
+          }, 1500);
         }
       }
-
-      // CLEAR CARD SELECTIONS AND OVERLAYS AFTER 1.8 SECONDS
-      setTimeout(() => {
-        setPlayerChoice(null);
-        setOpponentChoice(null);
-        setBigMoment(null);
-        isProcessing.current = false;
-      }, 1800);
-
-    }, 2000);
+    }
   };
 
-  // Reset lobby/state
+  // Safe handler callback ref for stable timer closures
+  const playerChoiceRef = useRef(playerChoice);
+  useEffect(() => {
+    playerChoiceRef.current = playerChoice;
+  }, [playerChoice]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (gameState !== 'PLAYING' || showOutcome || isWicket) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimerVal((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Transition timerVal to 0 so the progress bar hits 0% and text shows 0s
+          // We wait exactly 1 second for this final animation before displaying outcome matchup
+          setTimeout(() => {
+            setShowOutcome(true);
+            evaluatePlay(playerChoiceRef.current);
+          }, 1000);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameState, showOutcome, isWicket]);
+
+  // Reset the match and state variables
   const resetGame = () => {
     isProcessing.current = false;
-    setPlayer1({ name: 'YOU', avatar: '🧤' });
-    setPlayer2({ name: 'OPPONENT', avatar: '🔴' });
-
     setGameState('PLAYING');
     setCurrentInnings(1);
     setScore(0);
     setTarget(0);
+    setBallsBowled(0);
     setUserFinalScore(null);
     setOpponentFinalScore(null);
     setPlayerChoice(null);
     setOpponentChoice(null);
     setIsWicket(false);
     setBallOutcome('-');
-    setBallHistory([]);
+    setTimerVal(3);
+    setShowOutcome(false);
+    setGameId(generateGameId());
     
     const startingRole = Math.random() < 0.5 ? 'batting' : 'bowling';
     setUserRole(startingRole);
@@ -242,38 +335,39 @@ export default function DirectHandCricket() {
           
           {/* Top HUD profiles & logs */}
           <Hud 
-            player1={player1} 
-            player2={player2} 
             userRole={userRole} 
+            currentInnings={currentInnings}
             score={score} 
+            userFinalScore={userFinalScore}
             opponentFinalScore={opponentFinalScore} 
-            ballHistory={ballHistory} 
           />
 
           {/* Central Scoreboard screen */}
           <BigScreen 
-            player1={player1} 
-            player2={player2} 
             userRole={userRole} 
+            currentInnings={currentInnings}
             score={score} 
+            userFinalScore={userFinalScore}
             opponentFinalScore={opponentFinalScore} 
-            isThinking={isThinking} 
             ballOutcome={ballOutcome} 
             playerChoice={playerChoice} 
             opponentChoice={opponentChoice} 
+            countdown={timerVal}
+            ballsBowled={ballsBowled}
+            showOutcome={showOutcome}
           />
 
           {/* Commentary Banner */}
           <div className={`zpl-commentary-banner ${isWicket ? 'out-state' : ''}`}>
-            {isThinking ? thinkingText : commentary}
+            {commentary}
           </div>
 
           {/* Play Cards Grid */}
           <CardDeck 
             isWicket={isWicket} 
-            isThinking={isThinking} 
             playerChoice={playerChoice} 
-            handlePlayBall={handlePlayBall} 
+            handlePlayBall={handleSelectCard} 
+            disabled={showOutcome}
           />
 
           {/* Score Target indicators in play */}
@@ -290,8 +384,6 @@ export default function DirectHandCricket() {
         <GameOver 
           userFinalScore={userFinalScore} 
           opponentFinalScore={opponentFinalScore} 
-          player1={player1} 
-          player2={player2} 
           resetGame={resetGame} 
         />
       )}
@@ -327,3 +419,4 @@ const styles = {
     border: '1px solid rgba(0,0,0,0.05)',
   }
 };
+

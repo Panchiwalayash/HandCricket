@@ -1,13 +1,15 @@
 'use client';
 
-export default function CardDeck({ isWicket, isThinking, playerChoice, handlePlayBall }) {
+export default function CardDeck({ isWicket, playerChoice, handlePlayBall, disabled }) {
+  const isDisabled = isWicket || disabled;
+  
   return (
     <section style={styles.cardsSection}>
       <div className="zpl-card-deck">
         {[1, 2, 3, 4, 5, 6].map((num) => (
           <button
             key={num}
-            disabled={isWicket || isThinking}
+            disabled={isDisabled}
             className={`flat-card ${playerChoice === num ? 'selected' : ''}`}
             onClick={() => handlePlayBall(num)}
           >
@@ -19,8 +21,11 @@ export default function CardDeck({ isWicket, isThinking, playerChoice, handlePla
   );
 }
 
+
+
 const styles = {
   cardsSection: {
     padding: '5px 0',
   }
 };
+
