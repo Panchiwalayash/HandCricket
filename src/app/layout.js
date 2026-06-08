@@ -8,8 +8,8 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "Neon Hand Cricket - The Ultimate Face-off",
-  description: "Play classic Hand Cricket against the computer with interactive neon themes, responsive coin toss, batting, and bowling modes.",
+  title: "Hand Cricket",
+  description: "Play the classic Hand Cricket game against the computer. Bat, bowl, select your runs, and aim for victory in this modern neon interactive face-off!",
 };
 
 export default function RootLayout({ children }) {

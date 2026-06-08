@@ -20,6 +20,7 @@ export default function DirectHandCricket() {
   const [ballsBowled, setBallsBowled] = useState(0);
   const [userFinalScore, setUserFinalScore] = useState(null);
   const [opponentFinalScore, setOpponentFinalScore] = useState(null);
+  const [history, setHistory] = useState([]);
 
   // Play selections
   const [playerChoice, setPlayerChoice] = useState(null);
@@ -40,6 +41,27 @@ export default function DirectHandCricket() {
   // Helper to generate random game ID
   const generateGameId = () => {
     return 'g-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+  };
+
+  const sendMatchResults = (finalUser, finalOpponent, currentHistory) => {
+    let winner = 'tie';
+    if (finalUser > finalOpponent) {
+      winner = 'human';
+    } else if (finalOpponent > finalUser) {
+      winner = 'computer';
+    }
+
+    fetch('/api/record-play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gameId,
+        userFinalScore: finalUser,
+        opponentFinalScore: finalOpponent,
+        winner,
+        history: currentHistory
+      })
+    }).catch(err => console.error('Failed to log match:', err));
   };
 
   // Initialize starting roles and game ID
@@ -81,24 +103,19 @@ export default function DirectHandCricket() {
     }
     const newScore = score + runsScored;
 
-    // Post play data to Postgres API in the background
-    fetch('/api/record-play', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gameId,
-        playerChoice: finalUserNum,
-        opponentChoice: compNum,
-        userRole,
-        scoreBefore: score,
-        scoreAfter: newScore,
-        runsScored,
-        target,
-        currentInnings,
-        ballsBowled: nextBallsBowled,
-        isWicket: isMatch
-      })
-    }).catch(err => console.error('Failed to log play:', err));
+    const currentPlay = {
+      innings: currentInnings,
+      userRole,
+      playerChoice: finalUserNum,
+      opponentChoice: compNum,
+      runsScored,
+      isWicket: isMatch,
+      scoreBefore: score,
+      scoreAfter: newScore,
+      ballsBowled: nextBallsBowled
+    };
+
+    setHistory(prev => [...prev, currentPlay]);
 
     if (currentInnings === 1) {
       if (isMatch) {
@@ -198,13 +215,19 @@ export default function DirectHandCricket() {
         setBigMoment('wicket');
         setTimeout(() => setIsShaking(false), 600);
 
+        let finalUser = userFinalScore;
+        let finalOpponent = opponentFinalScore;
         if (userRole === 'batting') {
           setUserFinalScore(score);
+          finalUser = score;
           setCommentary(`Clean bowled! Opponent matched your ${compNum}!`);
         } else {
           setOpponentFinalScore(score);
+          finalOpponent = score;
           setCommentary(`Clean bowled! You got Opponent OUT!`);
         }
+
+        sendMatchResults(finalUser, finalOpponent, [...history, currentPlay]);
 
         setTimeout(() => {
           setGameState('GAME_OVER');
@@ -231,22 +254,34 @@ export default function DirectHandCricket() {
 
         // Check victory or over complete
         if (newScore >= target) {
+          let finalUser = userFinalScore;
+          let finalOpponent = opponentFinalScore;
           if (userRole === 'batting') {
             setUserFinalScore(newScore);
+            finalUser = newScore;
           } else {
             setOpponentFinalScore(newScore);
+            finalOpponent = newScore;
           }
+
+          sendMatchResults(finalUser, finalOpponent, [...history, currentPlay]);
 
           setTimeout(() => {
             setGameState('GAME_OVER');
             setBigMoment(null);
           }, 1500);
         } else if (nextBallsBowled === 6) {
+          let finalUser = userFinalScore;
+          let finalOpponent = opponentFinalScore;
           if (userRole === 'batting') {
             setUserFinalScore(newScore);
+            finalUser = newScore;
           } else {
             setOpponentFinalScore(newScore);
+            finalOpponent = newScore;
           }
+
+          sendMatchResults(finalUser, finalOpponent, [...history, currentPlay]);
 
           setTimeout(() => {
             setGameState('GAME_OVER');
@@ -307,6 +342,7 @@ export default function DirectHandCricket() {
     setBallsBowled(0);
     setUserFinalScore(null);
     setOpponentFinalScore(null);
+    setHistory([]);
     setPlayerChoice(null);
     setOpponentChoice(null);
     setIsWicket(false);

@@ -6,16 +6,10 @@ export async function POST(request) {
     const data = await request.json();
     const {
       gameId,
-      playerChoice,
-      opponentChoice,
-      userRole,
-      scoreBefore,
-      scoreAfter,
-      runsScored,
-      target,
-      currentInnings,
-      ballsBowled,
-      isWicket
+      userFinalScore,
+      opponentFinalScore,
+      winner,
+      history
     } = data;
 
     // Get client IP address from proxy headers
@@ -31,46 +25,36 @@ export async function POST(request) {
 
     // If Vercel Postgres is connected and we are in production
     if (process.env.POSTGRES_URL && isProduction) {
-      // Auto-create plays table if it doesn't exist
+      // Auto-create matches table if it doesn't exist
       await sql`
-        CREATE TABLE IF NOT EXISTS plays (
+        CREATE TABLE IF NOT EXISTS matches (
           id SERIAL PRIMARY KEY,
-          game_id VARCHAR(50),
+          game_id VARCHAR(50) UNIQUE,
           ip VARCHAR(50),
           user_agent TEXT,
-          player_choice INT,
-          opponent_choice INT,
-          user_role VARCHAR(20),
-          score INT,
-          score_before INT,
-          runs_scored INT,
-          target INT,
-          innings INT,
-          balls_bowled INT,
-          is_wicket BOOLEAN,
+          user_score INT,
+          opponent_score INT,
+          winner VARCHAR(20),
+          history JSONB,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
 
-
       // Insert record
       await sql`
-        INSERT INTO plays (
-          game_id, ip, user_agent, player_choice, opponent_choice, 
-          user_role, score, score_before, runs_scored, target, 
-          innings, balls_bowled, is_wicket
+        INSERT INTO matches (
+          game_id, ip, user_agent, user_score, opponent_score, winner, history
         )
         VALUES (
-          ${gameId}, ${ip}, ${userAgent}, ${playerChoice}, ${opponentChoice}, 
-          ${userRole}, ${scoreAfter}, ${scoreBefore}, ${runsScored}, ${target}, 
-          ${currentInnings}, ${ballsBowled}, ${isWicket}
-        );
+          ${gameId}, ${ip}, ${userAgent}, ${userFinalScore}, ${opponentFinalScore}, ${winner}, ${JSON.stringify(history)}
+        )
+        ON CONFLICT (game_id) DO NOTHING;
       `;
     }
 
     return NextResponse.json({ success: true, ip });
   } catch (error) {
-    console.error('Error logging play data:', error);
+    console.error('Error logging match data:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
